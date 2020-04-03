@@ -38,6 +38,10 @@ public class CorsoDAO {
 
 				// Crea un nuovo JAVA Bean Corso
 				// Aggiungi il nuovo oggetto Corso alla lista corsi
+				
+				Corso c = new Corso(codins, numeroCrediti, nome, periodoDidattico);
+				
+				corsi.add(c);
 			}
 
 			conn.close();
@@ -62,16 +66,62 @@ public class CorsoDAO {
 	/*
 	 * Ottengo tutti gli studenti iscritti al Corso
 	 */
-	public void getStudentiIscrittiAlCorso(Corso corso) {
-		// TODO
+	public List<Studente> getStudentiIscrittiAlCorso(Corso corso) {
+		
+		List<Studente> studenti = new LinkedList<Studente>();
+		
+		final String sql = "SELECT studente.matricola, studente.cognome, studente.nome, studente.CDS FROM studente, iscrizione WHERE studente.matricola = iscrizione.matricola and codins = ?";
+		
+		try {
+			
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+			
+			ResultSet rs = st.executeQuery();
+			
+			while(rs.next()) {
+				
+				int matricola = rs.getInt("matricola");
+				String cognome = rs.getString("cognome");
+				String nome = rs.getString("nome");
+				String CDS = rs.getString("CDS");
+				
+				Studente s = new Studente(matricola, cognome, nome, CDS);
+				studenti.add(s);
+			}
+			conn.close();
+			return studenti;
+		}catch(SQLException e) {
+			throw new RuntimeException("Errore Db", e);
+		}
+		
 	}
 
 	/*
 	 * Data una matricola ed il codice insegnamento, iscrivi lo studente al corso.
 	 */
-	public boolean inscriviStudenteACorso(Studente studente, Corso corso) {
-		// TODO
-		// ritorna true se l'iscrizione e' avvenuta con successo
+	public boolean iscriviStudenteACorso(Studente studente, Corso corso) {
+		
+		final String sql = "INSERT INTO iscrizione(matricola, codins) VALUE (?, ?)";
+		
+		try {
+			
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			
+			st.setInt(1, studente.getMatricola());
+			st.setString(2, corso.getCodins());
+			
+			int res = st.executeUpdate();
+			
+			if(res!=0)
+				return true;
+			
+		}catch(SQLException e) {
+			//throw new RuntimeException("Errore Db", e);
+			return false;
+		}
 		return false;
 	}
 
